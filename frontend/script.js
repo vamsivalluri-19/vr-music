@@ -2,6 +2,11 @@ const API_BASE = window.location.port === '3000' ? '' : `${window.location.proto
 
 async function apiFetch(endpoint, options = {}) {
     options.credentials = 'include';
+    const token = localStorage.getItem('token');
+    if (token) {
+        options.headers = options.headers || {};
+        options.headers['Authorization'] = `Bearer ${token}`;
+    }
     return fetch(`${API_BASE}${endpoint}`, options);
 }
 
@@ -165,6 +170,10 @@ authForm.addEventListener('submit', async (e) => {
         
         if (response.ok) {
             currentUser = data.user;
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+            localStorage.setItem('user', JSON.stringify(data.user));
             initApp();
         } else {
             authError.innerText = data.message || "Authentication failed";
@@ -177,6 +186,8 @@ authForm.addEventListener('submit', async (e) => {
 logoutBtn.addEventListener('click', async () => {
     try {
         await apiFetch('/api/auth/logout', { method: 'POST' });
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.reload();
     } catch (err) {
         console.error(err);
@@ -663,18 +674,23 @@ async function toggleLike(musicId, btnElement) {
 // Check if user is already logged in via cookie on load
 // We can try to fetch music, if it fails with 401, they need to login.
 window.onload = async () => {
-    try {
-        const res = await apiFetch('/api/music');
-        if (res.ok) {
-            // User is logged in, but we need user details.
-            // For now, let's just make them log in since there's no /me endpoint
-            // Wait, we can add a simple mock profile or just show login
-            // Since we don't have a /api/auth/me endpoint, we'll just show the login modal.
-            authModal.classList.add('show');
-        } else {
-            authModal.classList.add('show');
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
+    
+    if (storedUser && storedToken) {
+        try {
+            const res = await apiFetch('/api/music');
+            if (res.ok) {
+                currentUser = JSON.parse(storedUser);
+                initApp();
+                return;
+            }
+        } catch (e) {
+            console.error("Session verification failed:", e);
         }
-    } catch (e) {
-        authModal.classList.add('show');
     }
+    
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    authModal.classList.add('show');
 };
