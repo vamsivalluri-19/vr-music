@@ -1,4 +1,4 @@
-const API_BASE = window.location.port === '3000' ? '' : 'http://localhost:3000';
+const API_BASE = window.location.port === '3000' ? '' : `${window.location.protocol}//${window.location.hostname}:3000`;
 
 async function apiFetch(endpoint, options = {}) {
     options.credentials = 'include';
