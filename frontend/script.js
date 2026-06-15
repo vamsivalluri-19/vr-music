@@ -1,3 +1,10 @@
+const API_BASE = window.location.port === '3000' ? '' : 'http://localhost:3000';
+
+async function apiFetch(endpoint, options = {}) {
+    options.credentials = 'include';
+    return fetch(`${API_BASE}${endpoint}`, options);
+}
+
 // State
 let currentUser = null;
 let currentMusics = [];
@@ -148,7 +155,7 @@ authForm.addEventListener('submit', async (e) => {
     const payload = isLoginMode ? { email, password } : { email, password, username };
 
     try {
-        const response = await fetch(endpoint, {
+        const response = await apiFetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -169,7 +176,7 @@ authForm.addEventListener('submit', async (e) => {
 
 logoutBtn.addEventListener('click', async () => {
     try {
-        await fetch('/api/auth/logout', { method: 'POST' });
+        await apiFetch('/api/auth/logout', { method: 'POST' });
         window.location.reload();
     } catch (err) {
         console.error(err);
@@ -192,7 +199,7 @@ function initApp() {
 
 async function fetchMusics() {
     try {
-        const response = await fetch('/api/music');
+        const response = await apiFetch('/api/music');
         const data = await response.json();
         
         if (response.ok) {
@@ -340,7 +347,7 @@ let currentSongToAdd = null;
 
 window.fetchUserPlaylists = async function() {
     try {
-        const response = await fetch('/api/playlist');
+        const response = await apiFetch('/api/playlist');
         const data = await response.json();
         if (response.ok) {
             userPlaylistsCache = data.playlists || [];
@@ -392,7 +399,7 @@ document.getElementById('btn-create-playlist').addEventListener('click', async (
     if (!name) return alert("Enter a playlist name");
     
     try {
-        const res = await fetch('/api/playlist', {
+        const res = await apiFetch('/api/playlist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name })
@@ -433,7 +440,7 @@ window.openAddToPlaylistModal = async function(musicId) {
 
 window.addSongToPlaylistAPI = async function(playlistId, musicId) {
     try {
-        const res = await fetch('/api/playlist/add', {
+        const res = await apiFetch('/api/playlist/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playlistId, musicId })
@@ -631,7 +638,7 @@ function formatTime(seconds) {
 // Like Logic
 async function toggleLike(musicId, btnElement) {
     try {
-        const response = await fetch(`/api/music/${musicId}/like`, { method: 'POST' });
+        const response = await apiFetch(`/api/music/${musicId}/like`, { method: 'POST' });
         const data = await response.json();
         
         if (response.ok) {
@@ -657,7 +664,7 @@ async function toggleLike(musicId, btnElement) {
 // We can try to fetch music, if it fails with 401, they need to login.
 window.onload = async () => {
     try {
-        const res = await fetch('/api/music');
+        const res = await apiFetch('/api/music');
         if (res.ok) {
             // User is logged in, but we need user details.
             // For now, let's just make them log in since there's no /me endpoint
