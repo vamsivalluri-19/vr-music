@@ -18,6 +18,11 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Bypass service worker for API requests and non-GET requests
+  if (event.request.url.includes('/api/') || event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -25,10 +30,7 @@ self.addEventListener('fetch', event => {
         if (response) {
           return response;
         }
-        return fetch(event.request).catch(() => {
-          // Fallback if offline
-          console.log('You are offline.');
-        });
+        return fetch(event.request);
       })
   );
 });
